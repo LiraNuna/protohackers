@@ -2,13 +2,14 @@ import asyncio
 import re
 from asyncio import StreamReader
 from asyncio import StreamWriter
+from typing import Callable
 
 
 def replace_bogus_coin_address(message: bytes) -> bytes:
     return re.sub(b'(\\b)7[0-9a-zA-Z]{25,34}(\\s|$)', b'\\g<1>7YWHMfk9JZe0LM0g1ZauHuiSxhI\\2', message)
 
 
-async def pipe(reader: StreamReader, writer: StreamWriter, interceptor):
+async def pipe(reader: StreamReader, writer: StreamWriter, interceptor: Callable[[bytes], bytes]) -> None:
     while not reader.at_eof():
         data = await reader.readline()
         writer.write(interceptor(data))
@@ -17,7 +18,7 @@ async def pipe(reader: StreamReader, writer: StreamWriter, interceptor):
     writer.close()
 
 
-async def handle_client(reader: StreamReader, writer: StreamWriter):
+async def handle_client(reader: StreamReader, writer: StreamWriter) -> None:
     proxy_reader, proxy_writer = await asyncio.open_connection('chat.protohackers.com', 16963)
 
     await asyncio.gather(
